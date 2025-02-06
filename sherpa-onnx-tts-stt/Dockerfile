@@ -5,7 +5,7 @@ FROM $BUILD_FROM
 #RUN apk add --no-cache python3 py3-pip cython3 git curl  \
 #  && python3 -m pip install --upgrade pip setuptools wheel
 #RUN apk update && apk add --no-cache python3 py3-pip cython3 git curl  \
-RUN apk update && apk add --no-cache git curl py3-pip cython3 cmake make setuptools wheel 
+RUN apk update && apk add --no-cache git curl py3-pip cython cmake make py3-setuptools py3-wheel 
 
 # Copy the add-on code.  Crucially *before* requirements.txt, so Docker layer caching works!
 COPY . /app
