@@ -13,8 +13,9 @@ WORKDIR /app
 
 # Install Python dependencies
 # Install sherpa-onnx.  Make sure ARM architecture is handled correctly.
-RUN pip3 install --upgrade --no-cache-dir sherpa-onnx \
-    wyoming
+RUN pip3 install --no-cache-dir sherpa-onnx
+#install 
+RUN pip install --no-cache-dir git+https://github.com/rhasspy/wyoming.git
 
 # Copy the files
 COPY run.py /app/
