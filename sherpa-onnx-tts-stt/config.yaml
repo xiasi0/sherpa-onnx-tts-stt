@@ -23,4 +23,4 @@ schema:
     uri: str?
 ports:
   10400/tcp: 10400
-
+image: "ghcr.io/ptbsare/home-assistant-addons/{arch}-sherpa-onnx-tts-stt
