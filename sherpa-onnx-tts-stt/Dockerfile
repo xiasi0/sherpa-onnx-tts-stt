@@ -1,4 +1,4 @@
-ARG BUILD_FROM python:alpine
+ARG BUILD_FROM "python:alpine"
 FROM $BUILD_FROM
 
 # Install Python dependencies
