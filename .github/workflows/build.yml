@@ -2,7 +2,7 @@ name: Builder
 
 env:
   BUILD_ARGS: "--test"
-  MONITORED_FILES: "build.yaml config.yaml Dockerfile rootfs/etc/services.d/crowdsec/run rootfs/etc/services.d/ttyd/run rootfs/etc/services.d/crowdsec-firewall-bouncer/run"
+  MONITORED_FILES: "build.yaml config.yaml Dockerfile"
 
 on:
   push:
@@ -130,7 +130,7 @@ jobs:
           push: true
           context: ./${{ matrix.addon }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ matrix.arch }}-addon-${{ matrix.addon }}:${{ steps.information.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}/${{ matrix.arch }}-addon-${{ matrix.addon }}:${{ steps.information.outputs.version }}
           platforms: ${{ steps.flags.outputs.platform }}
           build-args: |
             BUILD_ARCH=${{ matrix.arch }}
