@@ -1,0 +1,361 @@
+# Home Assistant Add-on: sherpa-onnx-tts-stt
+
+# Standard library imports
+import logging
+import os
+import subprocess  # For running shell commands to download models
+
+# Third-party library imports
+from wyoming.asr import (
+    Transcribe,
+    TranscribeEvent,
+    Transcript,
+)
+
+from wyoming.audio import AudioChunk, AudioChunkConverter, AudioStart, AudioStop
+from wyoming.client import AsyncTcpClient
+from wyoming.config import PipelineConfig, load_config
+from wyoming.event import Event
+from wyoming.info import  AsrModel, AsrProgram,  TtsModel, TtsProgram, Describe, Info
+from wyoming.server import AsyncEventHandler, AsyncServer
+from wyoming.tts import Synthesize, TtsChunk, TtsVoice
+
+import sherpa_onnx
+
+_LOGGER = logging.getLogger("sherpa_onnx_addon")
+
+# --- Configuration Defaults ---
+DEFAULT_LANGUAGE = "zh"  # Default to Chinese
+DEFAULT_SPEED = 1.0
+
+class SherpaOnnxEventHandler(AsyncEventHandler):
+    """Event handler for sherpa-onnx TTS and STT."""
+
+    def __init__(
+        self,
+        wyoming_info: Info,
+        cli_args,  # For language/speed settings
+        *args,
+        **kwargs,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.cli_args = cli_args
+        self.wyoming_info_ = wyoming_info
+
+        self.config = load_config()
+        self.pipeline_config: PipelineConfig = self.config.pipelines[
+            self.cli_args.pipeline
+        ]
+
+        _LOGGER.info(f"CLI Args: {self.cli_args}")
+        self.language = self.cli_args.language or DEFAULT_LANGUAGE
+        self.speed = self.cli_args.speed or DEFAULT_SPEED
+
+        self.stt_model = None
+        self.tts_model = None
+
+        self._initialize_models()  # Download and initialize models
+        self.audio_converter = AudioChunkConverter(rate=16000, width=2, channels=1)
+
+
+    async def initialize(self) -> None:
+           """ Async initialization (if needed, after models are loaded) """
+           pass
+    def _download_stt_model(self, model_url, model_path):
+        """Downloads and extracts the STT model."""
+        if not os.path.exists(model_path):
+            _LOGGER.info(f"Downloading STT model: {model_url}")
+            os.makedirs(model_path, exist_ok=True)
+
+            # Use curl (or wget) for download and extraction (more robust than Python libraries for large files)
+            try:
+             subprocess.check_call(
+                   ["curl", "-L", model_url, "-o", "stt_model.tar.bz2"]
+               )
+
+             subprocess.check_call(["tar", "-xvf", "stt_model.tar.bz2","-C", model_path])
+             os.remove("stt_model.tar.bz2") # Clean up
+
+            except subprocess.CalledProcessError as e:
+                 _LOGGER.error(f"Error downloading or extracting STT model: {e}")
+                 raise  #  Re-raise to stop add-on startup on failure
+        else:
+         _LOGGER.info("STT model already exists.")
+    def _download_tts_model(self, model_url,model_dir):
+        """Downloads and extracts the STT model."""
+        if not os.path.exists(model_dir):
+            _LOGGER.info(f"Downloading TTS model: {model_url}")
+            os.makedirs(model_dir, exist_ok=True)
+
+            # Use curl (or wget) for download and extraction (more robust than Python libraries for large files)
+            try:
+             subprocess.check_call(
+                   ["curl", "-L", model_url, "-o", "tts_model.tar.bz2"]
+               )
+
+             subprocess.check_call(["tar", "-xvf", "tts_model.tar.bz2","-C", model_dir])
+             os.remove("tts_model.tar.bz2") # Clean up
+
+            except subprocess.CalledProcessError as e:
+                 _LOGGER.error(f"Error downloading or extracting TTS model: {e}")
+                 raise  #  Re-raise to stop add-on startup on failure
+        else:
+         _LOGGER.info("TTS model already exists.")
+
+
+
+    def _initialize_models(self):
+        """Downloads (if necessary) and initializes the STT and TTS models."""
+
+        # --- STT Model ---
+        stt_model_url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2"
+        stt_model_dir =  "./stt_model"
+        self._download_stt_model(stt_model_url, stt_model_dir)
+
+
+        # STT Initialization (adjust paths as needed for extracted model)
+        try:
+            self.stt_model = sherpa_onnx.OnlineRecognizer.from_paraformer(
+                 tokens=os.path.join(stt_model_dir, "tokens.txt"),
+                 encoder=os.path.join(stt_model_dir, "encoder.int8.onnx"),
+                 decoder=os.path.join(stt_model_dir, "decoder.int8.onnx"),
+
+                num_threads=1,   # Adjust based on your hardware
+                sample_rate=16000,
+                feature_dim=80,
+                enable_endpoint_detection=True,  # Enable endpoint detection
+                rule1_min_trailing_silence=2.4,
+                rule2_min_trailing_silence=1.2,
+                rule3_min_utterance_length=300,
+            )
+        except Exception as e:  # More specific exception handling is better
+            _LOGGER.exception("Failed to initialize STT model:")
+            _LOGGER.error(e)
+            raise
+
+        # --- TTS Model ---
+        tts_model_url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/matcha-icefall-zh-baker.tar.bz2"
+        tts_vocoder = "https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v2.onnx"
+        tts_model_dir =  "./tts_model"
+        self. _download_tts_model(tts_model_url,tts_model_dir)
+        self._download_tts_model(tts_vocoder,tts_model_dir)
+         # TTS Initialization
+        try:
+            self.tts_model = sherpa_onnx.OfflineTts(
+                model=sherpa_onnx.OfflineTtsModelConfig(
+              matcha=sherpa_onnx.OfflineTtsMatchaModelConfig(
+                acoustic_model=os.path.join(tts_model_dir,"model-steps-3.onnx"),
+                vocoder=os.path.join(tts_model_dir,"hifigan_v2.onnx"),
+                lexicon=os.path.join(tts_model_dir,"lexicon.txt"),
+                tokens=os.path.join(tts_model_dir,"tokens.txt"),
+                data_dir=os.path.join(tts_model_dir,""), # Add your espeak-ng-data path if necessary
+                dict_dir=os.path.join(tts_model_dir,"dict")
+            ),
+            provider="cpu",    # or "cuda" if you have a GPU
+            num_threads=1,     # Adjust as needed
+            debug=False,       # Set to True for debugging output
+                ),
+
+                rule_fsts=f"{tts_model_dir}/phone.fst,{tts_model_dir}/date.fst,{tts_model_dir}/number.fst",  # Example rule FSTs, adjust path if needed
+                max_num_sentences=1,
+                )
+
+        except Exception as e:
+            _LOGGER.exception("Failed to initialize TTS model:")
+            raise
+
+
+
+    async def handle_event(self, event: Event) -> bool:
+        """Handles a single event."""
+        _LOGGER.debug(f"Received event: {event}") # important for debugging
+        if Describe.is_type(event.type):
+            await self.write_event(self.wyoming_info_.event())
+            _LOGGER.debug(f"Sent info")
+            return True  # Stop other handlers
+
+
+        if Synthesize.is_type(event.type):
+
+            synthesize = Synthesize.from_event(event)
+            _LOGGER.info(f"Synthesizing: {synthesize.text}")
+            audio = self.tts_model.generate(
+                 text=synthesize.text,
+                 sid=0, # Speaker ID, adjust if using a multi-speaker model
+                 speed=self.speed
+
+            )
+            # Send TTS Chunk (raw audio)
+            await self.write_event(
+               TtsChunk(
+                  audio=audio.samples.tobytes(),
+                  sample_rate=audio.sample_rate,
+                  sample_width=2,  # Assuming 16-bit (2 bytes) samples
+                  channels=1
+               ).event()
+            )
+            _LOGGER.debug("Sent TTS Chunk")
+
+
+            return True # We handled the event
+
+        elif Transcribe.is_type(event.type):
+                # STT (Speech-to-Text)
+                transcribe: Transcribe = Transcribe.from_event(event)
+                _LOGGER.debug(f"Received Transcribe request: {transcribe}")
+
+
+
+        elif AudioStart.is_type(event.type):
+                # Handle AudioStart (if needed, e.g., for resetting state)
+                audio_start = AudioStart.from_event(event)
+                self.stt_stream = self.stt_model.create_stream()
+                self.last_result = "" # reset result cache
+                _LOGGER.debug(f"Received audio start: {audio_start}")
+                return True
+
+
+        elif AudioChunk.is_type(event.type):
+                 # Handle AudioChunk
+                audio_chunk = AudioChunk.from_event(event)
+                #_LOGGER.debug(f"Received audio chunk: {len(audio_chunk.audio)} bytes")
+
+                # Convert to expected format.
+                chunk = self.audio_converter.convert(audio_chunk.audio)
+
+                # Process the audio chunk with sherpa-onnx.
+                self.stt_stream.accept_waveform(audio_chunk.sample_rate, chunk)
+                while self.stt_model.is_ready(self.stt_stream):
+                     self.stt_model.decode_stream(self.stt_stream)
+
+                result = self.stt_model.get_result(self.stt_stream)
+                if result and (self.last_result != result):
+                      self.last_result = result
+                      _LOGGER.debug(f"Partial transcript: {result}")
+
+                if self.stt_model.is_endpoint(self.stt_stream):
+                     if result:
+                       text = result
+                       _LOGGER.info(f"Final transcript: {text}")
+                       await self.write_event(Transcript(text=text).event())
+                     self.stt_model.reset(self.stt_stream) # Reset for next utterance
+                return True
+        elif AudioStop.is_type(event.type):
+             audio_stop = AudioStop.from_event(event)
+             _LOGGER.debug(f"Recevie audio stop:{audio_stop}")
+             if self.stt_stream:
+
+                #  signal that no more audio is coming
+                self.stt_stream.input_finished()
+                while self.stt_model.is_ready(self.stt_stream):
+                  self.stt_model.decode_stream(self.stt_stream)
+                result = self.stt_model.get_result(self.stt_stream)
+
+                if result:
+                 text = result
+                 _LOGGER.info(f"Final transcript on stop: {text}")
+                 await self.write_event(Transcript(text=text).event())
+             return True
+        return False # Unhandled events
+
+
+
+async def main() -> None:
+    """Main entry point."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--pipeline",
+        default="default",
+        help="Name of Wyoming pipeline to use",
+    )
+    # Add custom arguments for language and speed
+    parser.add_argument("--language", type=str, default=DEFAULT_LANGUAGE, help="Language for TTS (default: zh)")
+    parser.add_argument("--speed", type=float, default=DEFAULT_SPEED, help="Speech speed (default: 1.0)")
+
+    # Wyoming Server arguments
+    parser.add_argument("--host", default="0.0.0.0")
+    parser.add_argument("--port", type=int, default=10400)
+    parser.add_argument("--uri", help="URI of server (e.g., tcp://0.0.0.0:10500)")
+
+     # Parse arguments
+    cli_args = parser.parse_args()
+
+
+
+    # Create the Wyoming info object.  This describes what
+    #  the add-on supports.
+    wyoming_program = AsrProgram(
+        name="sherpa-onnx-streaming-paraformer",
+        description="A Chinese/English ASR system using Paraformer models from sherpa-onnx.",
+        attribution=AsrModel.ATTRIBUTION,  # Replace with appropriate attribution
+        installed=True,
+        version="0.0.1",
+         models=[
+           AsrModel(
+             name="sherpa-onnx-paraformer-zh-2023-03-28",
+             description="Paraformer Chinese ASR model",
+             languages=["zh"],
+             attribution="k2-fsa",
+             installed= True,  #  model is now bundled
+             model_type="paraformer",
+             download_url="https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2",
+        )
+        ]
+    )
+
+    wyoming_info = Info(
+        asr=[wyoming_program],
+         tts=[
+            TtsProgram(
+                name="sherpa-onnx-offline-tts",
+                description="Chinese TTS based on sherpa-onnx and the matcha-icefall-zh-baker model.",
+                attribution="k2-fsa",
+                installed= True,
+                version="0.1.0",
+                models=[
+                  TtsModel(
+                      name="matcha-icefall-zh-baker",
+                      description="Matcha-TTS Chinese model",
+                      languages=["zh"],
+                      attribution="k2-fsa",
+                      installed= True,
+                      model_type="matcha",
+                       voices=[
+                         TtsVoice(name="speaker_0",description="zh") # speaker 0
+                       ],
+                       download_url="https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/matcha-icefall-zh-baker.tar.bz2",
+                   )
+
+                ]
+            )
+         ]
+    )
+
+     # Set up logging
+    logging.basicConfig(level=logging.DEBUG if cli_args.debug else logging.INFO)
+    _LOGGER.info("Starting sherpa-onnx add-on...")
+
+
+    # Create the server and handler, using our custom handler.
+      if cli_args.uri is not None:
+        # Connect to remote server
+        reader, writer = await AsyncTcpClient.connect(cli_args.uri)
+        await AsyncEventHandler.run_handler(
+            SherpaOnnxEventHandler(wyoming_info,  cli_args, reader, writer)
+        )
+      else:
+        # Run local server
+        server = AsyncServer(cli_args.host, cli_args.port)
+        await server.run(
+           SherpaOnnxEventHandler(wyoming_info, cli_args, server.reader, server.writer))
+    _LOGGER.info("Stopped")
+
+
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass
+
