@@ -13,9 +13,10 @@ WORKDIR /app
 
 # Install Python dependencies
 # Install sherpa-onnx.  Make sure ARM architecture is handled correctly.
-RUN pip3 install --no-cache-dir sherpa-onnx
+#RUN pip3 install --no-cache-dir sherpa-onnx
+RUN pip3 install sherpa-onnx -f https://k2-fsa.github.io/sherpa/onnx/cpu.html
 #install 
-RUN pip install --no-cache-dir git+https://github.com/rhasspy/wyoming.git
+RUN pip3 install --no-cache-dir git+https://github.com/rhasspy/wyoming.git
 
 # Copy the files
 COPY run.py /app/
