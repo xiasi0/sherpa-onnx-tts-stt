@@ -14,6 +14,7 @@ RUN apt-get update \
         bzip2 \
 		git \
 		&& rm -rf /var/lib/apt/lists/*
+
 # Copy the add-on code.  Crucially *before* requirements.txt, so Docker layer caching works!
 COPY . /app
 WORKDIR /app
