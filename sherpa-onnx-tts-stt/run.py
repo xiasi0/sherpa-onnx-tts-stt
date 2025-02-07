@@ -185,8 +185,8 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
 
         elif Transcribe.is_type(event.type):
                 # STT (Speech-to-Text)
-                _LOGGER.debug(f"Received Transcribe request: {transcribe}")
                 transcribe: Transcribe = Transcribe.from_event(event)
+                _LOGGER.debug(f"Received Transcribe request: {transcribe}")
 
 
 
