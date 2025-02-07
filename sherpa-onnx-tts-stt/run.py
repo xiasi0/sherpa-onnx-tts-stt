@@ -7,6 +7,7 @@ import subprocess  # For running shell commands to download models
 import asyncio
 import argparse
 from functools import partial
+import numpy as np
 
 # Third-party library imports
 from wyoming.asr import (
@@ -89,7 +90,6 @@ def _initialize_models():
         tts_model_dir =  "/tts_model"
         _download_tts_model(tts_model_url,tts_model_dir)
         _download_tts_model(tts_vocoder,tts_model_dir)
-         # TTS Initialization
 
 class SherpaOnnxEventHandler(AsyncEventHandler):
     """Event handler for sherpa-onnx TTS and STT."""
@@ -98,10 +98,10 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
         self,
         wyoming_info: Info,
         cli_args,  # For language/speed settings
+        tts_model,
+        stt_model,
         *args,
         **kwargs,
-        tts_model: sherpa_onnx.OfflineRecognizer,
-        stt_model: sherpa_onnx.OfflineTts,
     ) -> None:
         super().__init__(*args, **kwargs)
 
@@ -117,8 +117,9 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
         self.language = self.cli_args.language or DEFAULT_LANGUAGE
         self.speed = self.cli_args.speed or DEFAULT_SPEED
 
-        self.stt_model = tts_model
-        self.tts_model = stt_model
+        self.tts_model = tts_model
+
+        self.stt_model = stt_model
 
 #        self._initialize_models()  # Download and initialize models
         self.audio_converter = AudioChunkConverter(rate=16000, width=2, channels=1)
@@ -148,10 +149,20 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
                  speed=self.speed
 
             )
+            if isinstance(audio.samples, list):
+                audio_samples = np.array(audio.samples, dtype=np.float32)
+            elif isinstance(audio.samples, np.ndarray):
+               audio_samples = audio.samples.astype(np.float32) # Ensure float32
+            else:
+               raise TypeError("Unexpected type for audio.samples: {}".format(type(audio.samples)))
+
+            # Scale to int16 and convert to bytes
+            audio_samples = (audio_samples * 32767).astype(np.int16)
+            audio_bytes = audio_samples.tobytes()
             # Send TTS Chunk (raw audio)
             await self.write_event(
                AudioChunk(
-                  audio=audio.samples.tobytes(),
+                  audio=audio_bytes,
                   rate=audio.sample_rate,
                   width=2,  # Assuming 16-bit (2 bytes) samples
                   channels=1
@@ -164,17 +175,17 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
 
         elif Transcribe.is_type(event.type):
                 # STT (Speech-to-Text)
-                transcribe: Transcribe = Transcribe.from_event(event)
                 _LOGGER.debug(f"Received Transcribe request: {transcribe}")
+                transcribe: Transcribe = Transcribe.from_event(event)
 
 
 
         elif AudioStart.is_type(event.type):
                 # Handle AudioStart (if needed, e.g., for resetting state)
+                _LOGGER.debug(f"Received audio start: {audio_start}")
                 audio_start = AudioStart.from_event(event)
                 self.stt_stream = self.stt_model.create_stream()
                 self.last_result = "" # reset result cache
-                _LOGGER.debug(f"Received audio start: {audio_start}")
                 return True
 
 
@@ -306,7 +317,8 @@ async def main() -> None:
     logging.basicConfig(level=logging.DEBUG)
     _LOGGER.info("Starting sherpa-onnx add-on...")
 
-
+    stt_model_dir="/stt_model"
+    tts_model_dir="/tts_model"
     # STT Initialization (adjust paths as needed for extracted model)
     try:
                 stt_model = sherpa_onnx.OfflineRecognizer.from_paraformer(
@@ -321,6 +333,7 @@ async def main() -> None:
             _LOGGER.error(e)
             raise
 
+    # TTS Initialization
     try:
                 tts_model = sherpa_onnx.OfflineTts(
                 sherpa_onnx.OfflineTtsConfig(
