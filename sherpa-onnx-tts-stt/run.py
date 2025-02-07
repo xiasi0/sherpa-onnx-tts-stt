@@ -12,7 +12,6 @@ import numpy as np
 # Third-party library imports
 from wyoming.asr import (
     Transcribe,
-#    TranscribeEvent,
     Transcript,
 )
 
@@ -140,25 +139,33 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
 
 
         if Synthesize.is_type(event.type):
-
             synthesize = Synthesize.from_event(event)
-            _LOGGER.info(f"Synthesizing: {synthesize.text}")
             audio = self.tts_model.generate(
                  text=synthesize.text,
                  sid=0, # Speaker ID, adjust if using a multi-speaker model
                  speed=self.speed
 
             )
+            _LOGGER.info(f"Synthesizing: {synthesize.text}")
             if isinstance(audio.samples, list):
                 audio_samples = np.array(audio.samples, dtype=np.float32)
             elif isinstance(audio.samples, np.ndarray):
-               audio_samples = audio.samples.astype(np.float32) # Ensure float32
+                audio_samples = audio.samples.astype(np.float32) # Ensure float32
             else:
-               raise TypeError("Unexpected type for audio.samples: {}".format(type(audio.samples)))
+                raise TypeError("Unexpected type for audio.samples: {}".format(type(audio.samples)))
 
             # Scale to int16 and convert to bytes
             audio_samples = (audio_samples * 32767).astype(np.int16)
             audio_bytes = audio_samples.tobytes()
+            # Send AudiaStart
+            await self.write_event(
+                AudioStart(
+                    rate=audio.sample_rate,
+                    width=2,
+                    channels=1
+                ).event()
+            )
+            _LOGGER.debug("Sent Audio Start")
             # Send TTS Chunk (raw audio)
             await self.write_event(
                AudioChunk(
@@ -169,7 +176,10 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
                ).event()
             )
             _LOGGER.debug("Sent TTS Chunk")
-
+            # Send Audio Stop
+            await self.write_event(AudioStop().event())
+            _LOGGER.debug("Sent Audia Stop")
+            
 
             return True # We handled the event
 
