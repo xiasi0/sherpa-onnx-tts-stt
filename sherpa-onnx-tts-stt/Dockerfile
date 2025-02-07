@@ -6,14 +6,15 @@ FROM $BUILD_FROM
 #  && python3 -m pip install --upgrade pip setuptools wheel
 #RUN apk update && apk add --no-cache python3 py3-pip cython3 git curl  \
 #RUN apk update && apk add --no-cache git curl py3-pip cython cmake make py3-setuptools py3-wheel g++ gcc  
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        ffmpeg \
-        tar \
-        curl \
-        bzip2 \
-		git \
-		&& rm -rf /var/lib/apt/lists/*
+#RUN apt-get update \
+#    && apt-get install -y --no-install-recommends \
+#        ffmpeg \
+#        tar \
+#        curl \
+#        bzip2 \
+#		git \
+#		&& rm -rf /var/lib/apt/lists/*
+RUN apk update && apk add --no-cache ffmpeg tar curl bzip2 git
 
 # Copy the add-on code.  Crucially *before* requirements.txt, so Docker layer caching works!
 COPY . /app
