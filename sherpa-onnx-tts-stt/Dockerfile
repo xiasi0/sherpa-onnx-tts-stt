@@ -13,7 +13,7 @@ RUN apt-get update \
         curl \
         bzip2 \
 		git \
-		cython \
+		cython3 \
 		python3-pip \
 		python3 \
 		&& rm -rf /var/lib/apt/lists/*
