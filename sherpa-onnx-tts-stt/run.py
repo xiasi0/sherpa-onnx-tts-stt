@@ -31,41 +31,7 @@ _LOGGER = logging.getLogger("sherpa_onnx_addon")
 DEFAULT_LANGUAGE = "zh-CN"  # Default to Chinese
 DEFAULT_SPEED = 1.0
 
-class SherpaOnnxEventHandler(AsyncEventHandler):
-    """Event handler for sherpa-onnx TTS and STT."""
-
-    def __init__(
-        self,
-        wyoming_info: Info,
-        cli_args,  # For language/speed settings
-        *args,
-        **kwargs,
-    ) -> None:
-        super().__init__(*args, **kwargs)
-
-        self.cli_args = cli_args
-        self.wyoming_info_ = wyoming_info
-
-#        self.config = load_config()
-#        self.pipeline_config: PipelineConfig = self.config.pipelines[
-#            self.cli_args.pipeline
-#        ]
-
-        _LOGGER.info(f"CLI Args: {self.cli_args}")
-        self.language = self.cli_args.language or DEFAULT_LANGUAGE
-        self.speed = self.cli_args.speed or DEFAULT_SPEED
-
-        self.stt_model = None
-        self.tts_model = None
-
-#        self._initialize_models()  # Download and initialize models
-        self.audio_converter = AudioChunkConverter(rate=16000, width=2, channels=1)
-
-
-    async def initialize(self) -> None:
-           """ Async initialization (if needed, after models are loaded) """
-           pass
-    def _download_stt_model(self, model_url, model_path):
+def _download_stt_model(model_url, model_path):
         """Downloads and extracts the STT model."""
         if not os.path.exists(model_path):
             _LOGGER.info(f"Downloading STT model: {model_url}")
@@ -85,7 +51,7 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
                  raise  #  Re-raise to stop add-on startup on failure
         else:
          _LOGGER.info("STT model already exists.")
-    def _download_tts_model(self, model_url,model_dir):
+def _download_tts_model(model_url,model_dir):
         """Downloads and extracts the STT model."""
         if not os.path.exists(model_dir):
             _LOGGER.info(f"Downloading TTS model: {model_url}")
@@ -108,62 +74,59 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
 
 
 
-    def _initialize_models(self):
+def _initialize_models():
         """Downloads (if necessary) and initializes the STT and TTS models."""
 
         # --- STT Model ---
         stt_model_url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2"
         stt_model_dir =  "/stt_model"
-        self._download_stt_model(stt_model_url, stt_model_dir)
+        _download_stt_model(stt_model_url, stt_model_dir)
 
-
-        # STT Initialization (adjust paths as needed for extracted model)
-        try:
-            self.stt_model = sherpa_onnx.OfflineRecognizer.from_paraformer(
-                paraformer=os.path.join(stt_model_dir, "model.int8.onnx"),
-                tokens=os.path.join(stt_model_dir, "tokens.txt"),
-                num_threads=2,   # Adjust based on your hardware
-                sample_rate=16000,
-                feature_dim=80,
-            )
-        except Exception as e:  # More specific exception handling is better
-            _LOGGER.exception("Failed to initialize STT model:")
-            _LOGGER.error(e)
-            raise
 
         # --- TTS Model ---
         tts_model_url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/matcha-icefall-zh-baker.tar.bz2"
         tts_vocoder = "https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v2.onnx"
         tts_model_dir =  "/tts_model"
-        self._download_tts_model(tts_model_url,tts_model_dir)
-        self._download_tts_model(tts_vocoder,tts_model_dir)
+        _download_tts_model(tts_model_url,tts_model_dir)
+        _download_tts_model(tts_vocoder,tts_model_dir)
          # TTS Initialization
-        try:
-            self.tts_model = sherpa_onnx.OfflineTts(
-                sherpa_onnx.OfflineTtsConfig(
-                model=sherpa_onnx.OfflineTtsModelConfig(
-                matcha=sherpa_onnx.OfflineTtsMatchaModelConfig(
-                acoustic_model=os.path.join(tts_model_dir,"model-steps-3.onnx"),
-                vocoder=os.path.join(tts_model_dir,"hifigan_v2.onnx"),
-                lexicon=os.path.join(tts_model_dir,"lexicon.txt"),
-                tokens=os.path.join(tts_model_dir,"tokens.txt"),
-                data_dir=os.path.join(tts_model_dir,""), # Add your espeak-ng-data path if necessary
-                dict_dir=os.path.join(tts_model_dir,"dict")
-                ),
-                provider="cpu",    # or "cuda" if you have a GPU
-                num_threads=2,     # Adjust as needed
-                debug=False,       # Set to True for debugging output
-                ),
 
-                rule_fsts=f"{tts_model_dir}/phone.fst,{tts_model_dir}/date.fst,{tts_model_dir}/number.fst",  # Example rule FSTs, adjust path if needed
-                max_num_sentences=1,
-                )
-                )
+class SherpaOnnxEventHandler(AsyncEventHandler):
+    """Event handler for sherpa-onnx TTS and STT."""
 
-        except Exception as e:
-            _LOGGER.exception("Failed to initialize TTS model:")
-            raise
+    def __init__(
+        self,
+        wyoming_info: Info,
+        cli_args,  # For language/speed settings
+        *args,
+        **kwargs,
+        tts_model: sherpa_onnx.OfflineRecognizer,
+        stt_model: sherpa_onnx.OfflineTts,
+    ) -> None:
+        super().__init__(*args, **kwargs)
 
+        self.cli_args = cli_args
+        self.wyoming_info_ = wyoming_info
+
+#        self.config = load_config()
+#        self.pipeline_config: PipelineConfig = self.config.pipelines[
+#            self.cli_args.pipeline
+#        ]
+
+        _LOGGER.info(f"CLI Args: {self.cli_args}")
+        self.language = self.cli_args.language or DEFAULT_LANGUAGE
+        self.speed = self.cli_args.speed or DEFAULT_SPEED
+
+        self.stt_model = tts_model
+        self.tts_model = stt_model
+
+#        self._initialize_models()  # Download and initialize models
+        self.audio_converter = AudioChunkConverter(rate=16000, width=2, channels=1)
+
+
+    async def initialize(self) -> None:
+           """ Async initialization (if needed, after models are loaded) """
+           pass
 
 
     async def handle_event(self, event: Event) -> bool:
@@ -284,32 +247,33 @@ async def main() -> None:
 
     # Create the Wyoming info object.  This describes what
     #  the add-on supports.
-    wyoming_program = AsrProgram(
-        name="sherpa-onnx-streaming-paraformer",
-        description="k2-fsa Chinese/English ASR system using Paraformer models from sherpa-onnx.",
-        attribution=Attribution(
+    wyoming_info = Info(
+        asr=[ 
+            AsrProgram(
+            name="sherpa-onnx-streaming-paraformer",
+            description="k2-fsa Chinese/English ASR system using Paraformer models from sherpa-onnx.",
+            attribution=Attribution(
                     name="k2-fsa",
                     url="https://github.com/k2-fsa/sherpa-onnx",
                 ),
-        installed=True,
-        version="0.0.1",
-        models=[
-           AsrModel(
-             name="sherpa-onnx-paraformer-zh-2023-03-28",
-             description="Paraformer Chinese ASR model",
-             languages=["zh-CN"],
-             attribution=Attribution(
-                name="k2-fsa",
-                url="https://github.com/k2-fsa/sherpa-onnx",
+            installed=True,
+            version="0.0.1",
+            models=[
+            AsrModel(
+                name="sherpa-onnx-paraformer-zh-2023-03-28",
+                description="Paraformer Chinese ASR model",
+                languages=["zh-CN"],
+                attribution=Attribution(
+                    name="k2-fsa",
+                    url="https://github.com/k2-fsa/sherpa-onnx",
                 ),
-             installed= True,  #  model is now bundled
-             version="0.1.0",
+                installed= True,  #  model is now bundled
+                version="0.1.0",
         )
         ]
     )
+    ],
 
-    wyoming_info = Info(
-        asr=[wyoming_program],
         tts=[
             TtsProgram(
                 name="sherpa-onnx-offline-tts",
@@ -317,7 +281,7 @@ async def main() -> None:
                 attribution=Attribution(
                     name="k2-fsa",
                     url="https://github.com/k2-fsa/sherpa-onnx",
-                    ),
+                ),
                 installed= True,
                 version="0.1.0",
                 voices=[
@@ -343,6 +307,46 @@ async def main() -> None:
     _LOGGER.info("Starting sherpa-onnx add-on...")
 
 
+    # STT Initialization (adjust paths as needed for extracted model)
+    try:
+                stt_model = sherpa_onnx.OfflineRecognizer.from_paraformer(
+                paraformer=os.path.join(stt_model_dir, "model.int8.onnx"),
+                tokens=os.path.join(stt_model_dir, "tokens.txt"),
+                num_threads=2,   # Adjust based on your hardware
+                sample_rate=16000,
+                feature_dim=80,
+            )
+    except Exception as e:  # More specific exception handling is better
+            _LOGGER.exception("Failed to initialize STT model:")
+            _LOGGER.error(e)
+            raise
+
+    try:
+                tts_model = sherpa_onnx.OfflineTts(
+                sherpa_onnx.OfflineTtsConfig(
+                model=sherpa_onnx.OfflineTtsModelConfig(
+                matcha=sherpa_onnx.OfflineTtsMatchaModelConfig(
+                acoustic_model=os.path.join(tts_model_dir,"model-steps-3.onnx"),
+                vocoder=os.path.join(tts_model_dir,"hifigan_v2.onnx"),
+                lexicon=os.path.join(tts_model_dir,"lexicon.txt"),
+                tokens=os.path.join(tts_model_dir,"tokens.txt"),
+                data_dir=os.path.join(tts_model_dir,""), # Add your espeak-ng-data path if necessary
+                dict_dir=os.path.join(tts_model_dir,"dict")
+                ),
+                provider="cpu",    # or "cuda" if you have a GPU
+                num_threads=2,     # Adjust as needed
+                debug=False,       # Set to True for debugging output
+                ),
+
+                rule_fsts=f"{tts_model_dir}/phone.fst,{tts_model_dir}/date.fst,{tts_model_dir}/number.fst",  # Example rule FSTs, adjust path if needed
+                max_num_sentences=1,
+                )
+                )
+
+    except Exception as e:
+            _LOGGER.exception("Failed to initialize TTS model:")
+            raise
+
     # Create the server and handler, using our custom handler.
     if cli_args.uri is not None:
         # Connect to remote server
@@ -360,6 +364,8 @@ async def main() -> None:
                SherpaOnnxEventHandler,
                wyoming_info,
                cli_args,
+               tts_model,
+               stt_model,
                )
            )
     _LOGGER.info("Stopped")
