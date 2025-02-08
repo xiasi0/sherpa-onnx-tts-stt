@@ -22,6 +22,22 @@ RUN apt-get update \
 WORKDIR /
 COPY rootfs /
 
+# Create model directories
+RUN mkdir -p /stt-models && mkdir -p /tts-models
+
+# Download and extract default STT model (sherpa-onnx-paraformer-zh-2023-03-28)
+WORKDIR /stt-models
+RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 -o sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 && \
+    tar -xf sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 && \
+    rm sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2
+
+# Download and extract default TTS model (matcha-icefall-zh-baker)
+WORKDIR /tts-models
+RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/matcha-icefall-zh-baker.tar.bz2 -o matcha-icefall-zh-baker.tar.bz2 && \
+    tar -xf matcha-icefall-zh-baker.tar.bz2 && \
+    rm matcha-icefall-zh-baker.tar.bz2
+RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v2.onnx -o hifigan_v2.onnx
+
 HEALTHCHECK --start-period=20m \
     CMD echo '{ "type": "describe" }' \
         | nc -w 1 localhost 10400 \

@@ -1,5 +1,5 @@
 name: Sherpa-onnx TTS/STT
-version: "0.1.1"
+version: "0.1.2"
 slug: sherpa_onnx_tts_stt
 description: Wyoming integration for sherpa-onnx TTS and STT
 arch:
