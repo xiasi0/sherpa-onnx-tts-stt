@@ -187,7 +187,7 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
             _LOGGER.debug("Sent TTS Chunk")
             # Send Audio Stop
             await self.write_event(AudioStop().event())
-            _LOGGER.debug("Sent Audia Stop")
+            _LOGGER.debug("Sent Audio Stop")
             
 
             return True # We handled the event
@@ -205,8 +205,9 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
                 # Handle AudioStart (if needed, e.g., for resetting state)
                 _LOGGER.debug(f"Received audio start event")
                 audio_start = AudioStart.from_event(event)
+                self.audio_recv_rate=audio_start.rate
+                self.stream=self.stt_model.create_stream()
                 self.audio = b""
-                self.last_result = "" # reset result cache
                 return True
 
 
@@ -227,8 +228,13 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
                 _LOGGER.debug(f"Recevie audio stop:{audio_stop}")
                 if self.audio:
                     audio_array = np.frombuffer(self.audio, dtype=np.int16).astype(np.float32) / 32768.0
-                    self.stt_model.decode_stream(audio_array)
-                    result = self.recognizer.decode(audio_array)
+                    self.stream.accept_waveform(self.audio_recv_rate, audio_array)
+                    #_LOGGER.debug(f'{audio_array}')
+                    #_LOGGER.debug(f'{self.audio}')
+                    self.stt_model.decode_stream(self.stream)
+                    result=self.stream.result
+                    _LOGGER.debug(f'{result}')
+
 
                 if result and result.text:
                     await self.write_event(Transcript(text=result.text).event())
@@ -327,11 +333,13 @@ async def main() -> None:
     # STT Initialization (adjust paths as needed for extracted model)
     try:
                 stt_model = sherpa_onnx.OfflineRecognizer.from_paraformer(
-                paraformer=os.path.join(stt_model_dir, "model.int8.onnx"),
+                paraformer=os.path.join(stt_model_dir, "model.onnx"),
                 tokens=os.path.join(stt_model_dir, "tokens.txt"),
-                num_threads=2,   # Adjust based on your hardware
+                decoding_method='greedy_search',
+                num_threads=4,   # Adjust based on your hardware
                 sample_rate=16000,
                 feature_dim=80,
+                debug=False,
             )
     except Exception as e:  # More specific exception handling is better
             _LOGGER.exception("Failed to initialize STT model:")
@@ -352,7 +360,7 @@ async def main() -> None:
                 dict_dir=os.path.join(tts_model_dir,"dict")
                 ),
                 provider="cpu",    # or "cuda" if you have a GPU
-                num_threads=2,     # Adjust as needed
+                num_threads=16,     # Adjust as needed
                 debug=False,       # Set to True for debugging output
                 ),
 
