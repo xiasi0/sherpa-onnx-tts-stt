@@ -254,7 +254,7 @@ async def main() -> None:
         help="Name of Wyoming pipeline to use",
     )
     # Add custom arguments for language and speed
-    parser.add_argument("--language", type=str, default=DEFAULT_LANGUAGE, help="Language for TTS (default: zh)")
+    parser.add_argument("--language", type=str, default=DEFAULT_LANGUAGE, help="Language for TTS (default: zh-CN)")
     parser.add_argument("--speed", type=float, default=DEFAULT_SPEED, help="Speech speed (default: 1.0)")
 
     # Wyoming Server arguments
@@ -333,7 +333,7 @@ async def main() -> None:
     # STT Initialization (adjust paths as needed for extracted model)
     try:
                 stt_model = sherpa_onnx.OfflineRecognizer.from_paraformer(
-                paraformer=os.path.join(stt_model_dir, "model.onnx"),
+                paraformer=os.path.join(stt_model_dir, "model.int8.onnx"),
                 tokens=os.path.join(stt_model_dir, "tokens.txt"),
                 decoding_method='greedy_search',
                 num_threads=4,   # Adjust based on your hardware

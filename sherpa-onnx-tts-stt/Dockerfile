@@ -29,7 +29,8 @@ RUN mkdir -p /stt-models && mkdir -p /tts-models
 WORKDIR /stt-models
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 -o sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 && \
     tar -xf sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 && \
-    rm sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2
+    rm sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 && \
+    rm model.onnx 
 
 # Download and extract default TTS model (matcha-icefall-zh-baker)
 WORKDIR /tts-models
