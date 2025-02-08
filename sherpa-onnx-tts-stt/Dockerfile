@@ -63,7 +63,5 @@ RUN pip install --break-system-packages --no-cache-dir git+https://github.com/rh
 # Copy the files
 COPY run.py /app/
 
-# Run the application on port 10400
-CMD ["python3", "/app/run.py"]
 
 
