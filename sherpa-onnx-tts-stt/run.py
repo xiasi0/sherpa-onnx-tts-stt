@@ -8,6 +8,7 @@ import asyncio
 import argparse
 from functools import partial
 import numpy as np
+import math
 
 # Third-party library imports
 from wyoming.asr import (
@@ -122,6 +123,7 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
 
 #        self._initialize_models()  # Download and initialize models
         self.audio_converter = AudioChunkConverter(rate=16000, width=2, channels=1)
+        self.audio = b""
 
 
     async def initialize(self) -> None:
@@ -157,7 +159,7 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
             # Scale to int16 and convert to bytes
             audio_samples = (audio_samples * 32767).astype(np.int16)
             audio_bytes = audio_samples.tobytes()
-            # Send AudiaStart
+            # Send AudioStart
             await self.write_event(
                 AudioStart(
                     rate=audio.sample_rate,
@@ -167,14 +169,21 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
             )
             _LOGGER.debug("Sent Audio Start")
             # Send TTS Chunk (raw audio)
-            await self.write_event(
-               AudioChunk(
-                  audio=audio_bytes,
-                  rate=audio.sample_rate,
-                  width=2,  # Assuming 16-bit (2 bytes) samples
-                  channels=1
-               ).event()
-            )
+            bytes_per_chunk = 1024;
+            num_chunks = int(math.ceil(len(audio_bytes) / bytes_per_chunk))
+
+            # Split into chunks
+            for i in range(num_chunks):
+                offset = i * bytes_per_chunk
+                chunk = audio_bytes[offset : offset + bytes_per_chunk]
+                await self.write_event(
+                    AudioChunk(
+                        audio=chunk,
+                        rate=audio.sample_rate,
+                        width=2,
+                        channels=1,
+                    ).event(),
+                )
             _LOGGER.debug("Sent TTS Chunk")
             # Send Audio Stop
             await self.write_event(AudioStop().event())
@@ -187,16 +196,19 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
                 # STT (Speech-to-Text)
                 transcribe: Transcribe = Transcribe.from_event(event)
                 _LOGGER.debug(f"Received Transcribe request: {transcribe}")
+                return True
+
 
 
 
         elif AudioStart.is_type(event.type):
                 # Handle AudioStart (if needed, e.g., for resetting state)
-                _LOGGER.debug(f"Received audio start: {audio_start}")
+                _LOGGER.debug(f"Received audio start event")
                 audio_start = AudioStart.from_event(event)
-                self.stt_stream = self.stt_model.create_stream()
+                self.audio = b""
                 self.last_result = "" # reset result cache
                 return True
+
 
 
         elif AudioChunk.is_type(event.type):
@@ -204,42 +216,25 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
                 audio_chunk = AudioChunk.from_event(event)
                 #_LOGGER.debug(f"Received audio chunk: {len(audio_chunk.audio)} bytes")
 
+                _LOGGER.debug("Processing audio chunk...")
+
                 # Convert to expected format.
-                chunk = self.audio_converter.convert(audio_chunk.audio)
-
-                # Process the audio chunk with sherpa-onnx.
-                self.stt_stream.accept_waveform(audio_chunk.sample_rate, chunk)
-                while self.stt_model.is_ready(self.stt_stream):
-                     self.stt_model.decode_stream(self.stt_stream)
-
-                result = self.stt_model.get_result(self.stt_stream)
-                if result and (self.last_result != result):
-                      self.last_result = result
-                      _LOGGER.debug(f"Partial transcript: {result}")
-
-                if self.stt_model.is_endpoint(self.stt_stream):
-                     if result:
-                       text = result
-                       _LOGGER.info(f"Final transcript: {text}")
-                       await self.write_event(Transcript(text=text).event())
-                     self.stt_model.reset(self.stt_stream) # Reset for next utterance
+                chunk = self.audio_converter.convert(audio_chunk)
+                self.audio += chunk.audio                
                 return True
         elif AudioStop.is_type(event.type):
-             audio_stop = AudioStop.from_event(event)
-             _LOGGER.debug(f"Recevie audio stop:{audio_stop}")
-             if self.stt_stream:
+                audio_stop = AudioStop.from_event(event)
+                _LOGGER.debug(f"Recevie audio stop:{audio_stop}")
+                if self.audio:
+                    audio_array = np.frombuffer(self.audio, dtype=np.int16).astype(np.float32) / 32768.0
+                    self.stt_model.decode_stream(audio_array)
+                    result = self.recognizer.decode(audio_array)
 
-                #  signal that no more audio is coming
-                self.stt_stream.input_finished()
-                while self.stt_model.is_ready(self.stt_stream):
-                  self.stt_model.decode_stream(self.stt_stream)
-                result = self.stt_model.get_result(self.stt_stream)
+                if result and result.text:
+                    await self.write_event(Transcript(text=result.text).event())
+                    _LOGGER.info(f"Final transcript on stop: {result.text}")
 
-                if result:
-                 text = result
-                 _LOGGER.info(f"Final transcript on stop: {text}")
-                 await self.write_event(Transcript(text=text).event())
-             return True
+                return True
         return False # Unhandled events
 
 
