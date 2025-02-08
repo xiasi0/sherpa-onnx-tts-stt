@@ -30,13 +30,17 @@ WORKDIR /stt-models
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 -o sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 && \
     tar -xf sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 && \
     rm sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 && \
-    rm model.onnx 
+    mv sherpa-onnx-paraformer-zh-2023-03-28/model.int8.onnx . && \
+    mv sherpa-onnx-paraformer-zh-2023-03-28/tokens.txt . && \
+    rm -rf sherpa-onnx-paraformer-zh-2023-03-28
 
 # Download and extract default TTS model (matcha-icefall-zh-baker)
 WORKDIR /tts-models
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/matcha-icefall-zh-baker.tar.bz2 -o matcha-icefall-zh-baker.tar.bz2 && \
     tar -xf matcha-icefall-zh-baker.tar.bz2 && \
-    rm matcha-icefall-zh-baker.tar.bz2
+    rm matcha-icefall-zh-baker.tar.bz2 && \
+    mv matcha-icefall-zh-baker/* . && \
+    rm -rf matcha-icefall-zh-baker
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v2.onnx -o hifigan_v2.onnx
 
 HEALTHCHECK --start-period=20m \
