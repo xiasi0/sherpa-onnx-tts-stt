@@ -14,14 +14,9 @@ boot: auto
 options:
     language: zh-CN
     speed: 1.0
-    #debug: false # Uncomment to enable DEBUG level logging
-    #  uri: "tcp://<your_remote_wyoming_server>:10400"  # Uncomment this to connect to a *remote* Wyoming server (running Home Assistant with the satellite feature), otherwise it will start a local server.
-
 schema:
     language: str?
     speed: float?
-    debug: bool?
-    uri: str?
 ports:
   10400/tcp: 10400
 homeassistant: 2023.8.0.dev20230728
