@@ -360,7 +360,7 @@ async def main() -> None:
                 dict_dir=os.path.join(tts_model_dir,"dict")
                 ),
                 provider="cpu",    # or "cuda" if you have a GPU
-                num_threads=16,     # Adjust as needed
+                num_threads=6,     # Adjust as needed
                 debug=False,       # Set to True for debugging output
                 ),
 
