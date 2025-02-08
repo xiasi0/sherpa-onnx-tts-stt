@@ -43,7 +43,7 @@ RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/m
     rm -rf matcha-icefall-zh-baker
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v2.onnx -o hifigan_v2.onnx
 
-HEALTHCHECK --start-period=1m --interval=20m \
+HEALTHCHECK --start-period=3m --interval=20m \
     CMD echo '{ "type": "describe" }' \
         | nc -w 1 localhost 10400 \
         | grep -iq "sherpa" \
