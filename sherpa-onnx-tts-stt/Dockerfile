@@ -19,6 +19,14 @@ RUN apt-get update \
 		&& rm -rf /var/lib/apt/lists/*
 #RUN apk update && apk add --no-cache ffmpeg tar curl bzip2 git cython3
 
+WORKDIR /
+COPY rootfs /
+
+HEALTHCHECK --start-period=20m \
+    CMD echo '{ "type": "describe" }' \
+        | nc -w 1 localhost 10400 \
+        | grep -iq "sherpa" \
+        || exit 1
 # Copy the add-on code.  Crucially *before* requirements.txt, so Docker layer caching works!
 COPY . /app
 WORKDIR /app
