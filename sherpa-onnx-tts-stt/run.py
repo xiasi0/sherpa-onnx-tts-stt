@@ -328,8 +328,8 @@ async def main() -> None:
     logging.basicConfig(level=logging.DEBUG)
     _LOGGER.info("Starting sherpa-onnx add-on...")
 
-    stt_model_dir="/stt_model"
-    tts_model_dir="/tts_model"
+    stt_model_dir="/stt_models"
+    tts_model_dir="/tts_models"
     # STT Initialization (adjust paths as needed for extracted model)
     try:
                 stt_model = sherpa_onnx.OfflineRecognizer.from_paraformer(
