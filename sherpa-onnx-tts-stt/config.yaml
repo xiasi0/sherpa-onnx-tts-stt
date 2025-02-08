@@ -4,10 +4,11 @@ slug: sherpa_onnx_tts_stt
 description: Wyoming integration for sherpa-onnx TTS and STT
 arch:
   - amd64
+  - aarch64
 startup: application
 boot: auto
 options:
-    language: zh
+    language: zh-CN
     speed: 1.0
     #debug: false # Uncomment to enable DEBUG level logging
     #  uri: "tcp://<your_remote_wyoming_server>:10400"  # Uncomment this to connect to a *remote* Wyoming server (running Home Assistant with the satellite feature), otherwise it will start a local server.
