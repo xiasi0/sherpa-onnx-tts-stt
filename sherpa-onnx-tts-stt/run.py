@@ -272,7 +272,7 @@ async def main() -> None:
     wyoming_info = Info(
         asr=[ 
             AsrProgram(
-            name="sherpa-onnx-streaming-paraformer",
+            name="Sherpa Onnx Offline STT",
             description="k2-fsa Chinese/English ASR system using Paraformer models from sherpa-onnx.",
             attribution=Attribution(
                     name="k2-fsa",
@@ -298,7 +298,7 @@ async def main() -> None:
 
         tts=[
             TtsProgram(
-                name="sherpa-onnx-offline-tts",
+                name="Sherpa Onnx Offline TTS",
                 description="Chinese TTS based on sherpa-onnx and the matcha-icefall-zh-baker model.",
                 attribution=Attribution(
                     name="k2-fsa",
@@ -336,7 +336,7 @@ async def main() -> None:
                 paraformer=os.path.join(stt_model_dir, "model.int8.onnx"),
                 tokens=os.path.join(stt_model_dir, "tokens.txt"),
                 decoding_method='greedy_search',
-                num_threads=4,   # Adjust based on your hardware
+                num_threads=16,   # Adjust based on your hardware
                 sample_rate=16000,
                 feature_dim=80,
                 debug=False,
@@ -360,7 +360,7 @@ async def main() -> None:
                 dict_dir=os.path.join(tts_model_dir,"dict")
                 ),
                 provider="cpu",    # or "cuda" if you have a GPU
-                num_threads=6,     # Adjust as needed
+                num_threads=16,     # Adjust as needed
                 debug=False,       # Set to True for debugging output
                 ),
 
