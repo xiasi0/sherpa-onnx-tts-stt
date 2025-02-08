@@ -336,7 +336,7 @@ async def main() -> None:
                 paraformer=os.path.join(stt_model_dir, "model.int8.onnx"),
                 tokens=os.path.join(stt_model_dir, "tokens.txt"),
                 decoding_method='greedy_search',
-                num_threads=16,   # Adjust based on your hardware
+                num_threads=3,   # Adjust based on your hardware
                 sample_rate=16000,
                 feature_dim=80,
                 debug=False,
@@ -360,7 +360,7 @@ async def main() -> None:
                 dict_dir=os.path.join(tts_model_dir,"dict")
                 ),
                 provider="cpu",    # or "cuda" if you have a GPU
-                num_threads=16,     # Adjust as needed
+                num_threads=3,     # Adjust as needed
                 debug=False,       # Set to True for debugging output
                 ),
 
