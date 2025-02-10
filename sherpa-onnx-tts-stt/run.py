@@ -111,9 +111,6 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
 #        ]
 
         _LOGGER.info(f"CLI Args: {self.cli_args}")
-        self.language = cli_args.language
-        self.speed = cli_args.speed
-        self.sid = cli_args.tts_speaker_sid
 
         self.tts_model = tts_model
 
@@ -142,8 +139,8 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
             synthesize = Synthesize.from_event(event)
             audio = self.tts_model.generate(
                 text=synthesize.text,
-                sid=cli_args.tts_speaker_sid,
-                speed=cli_args.speed,
+                sid=self.cli_args.tts_speaker_sid,
+                speed=self.cli_args.speed,
             )
             _LOGGER.info(f"Synthesizing: {synthesize.text}")
             if isinstance(audio.samples, list):

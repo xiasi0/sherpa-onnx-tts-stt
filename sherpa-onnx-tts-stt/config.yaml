@@ -1,5 +1,5 @@
 name: Sherpa Onnx TTS/STT
-version: "0.2.4"
+version: "0.2.5"
 slug: sherpa_onnx_tts_stt
 description: Wyoming integration for sherpa-onnx TTS and STT. (Supports Chinese For Now. It just works. For Multi-language/Custimaze Port/Custimaze Model Support, PR is Welcomed.)
 url: https://github.com/ptbsare/home-assistant-addons/tree/main/sherpa-onnx-tts-stt
