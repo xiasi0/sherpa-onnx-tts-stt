@@ -90,11 +90,13 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
 
         self.stt_model = stt_model
 
-#        self._initialize_models()  # Download and initialize models
         self.audio_converter = AudioChunkConverter(rate=16000, width=2, channels=1)
         self.audio = b""
 
 
+
+
+        
     async def initialize(self) -> None:
            """ Async initialization (if needed, after models are loaded) """
            pass

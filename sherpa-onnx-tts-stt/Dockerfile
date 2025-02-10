@@ -17,7 +17,7 @@ ENV DEBUG 'True'
 #RUN apk update && apk add --no-cache git curl py3-pip cython cmake make py3-setuptools py3-wheel g++ gcc  
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        ffmpeg \
+        netcat \
         tar \
         curl \
         bzip2 \
