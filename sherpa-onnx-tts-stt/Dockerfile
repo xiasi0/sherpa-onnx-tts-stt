@@ -46,10 +46,11 @@ RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/m
     tar -xf matcha-icefall-zh-baker.tar.bz2 && \
     rm matcha-icefall-zh-baker.tar.bz2 
 
+# Download and extract default TTS model (kokoro-multi-lang-v1_0)
 WORKDIR /tts-models
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-multi-lang-v1_0.tar.bz2 -o kokoro-multi-lang-v1_0.tar.bz2 && \
     tar -xf kokoro-multi-lang-v1_0.tar.bz2 && \
-    rm matcha-icefall-zh-baker.tar.bz2 
+    rm kokoro-multi-lang-v1_0.tar.bz2 
     
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v1.onnx -o hifigan_v1.onnx    
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v2.onnx -o hifigan_v2.onnx
