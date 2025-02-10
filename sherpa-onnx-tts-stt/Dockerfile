@@ -1,5 +1,14 @@
 ARG BUILD_FROM "python:3.11.9-slim-bullseye"
 FROM $BUILD_FROM
+ENV LANGUAGE 'zh-CN'
+ENV SPEED '1.0'
+ENV STT_MODEL 'sherpa-onnx-paraformer-zh-2023-03-28'
+ENV STT_USE_INT8_ONNX_MODEL 'True'
+ENV STT_THREAD_NUM '3'
+ENV TTS_MODEL 'matcha-icefall-zh-baker'
+ENV TTS_THREAD_NUM '3'
+ENV TTS_SPEAKER_SID '0'
+ENV DEBUG 'True'
 
 # Install Python dependencies
 #RUN apk add --no-cache python3 py3-pip cython3 git curl  \
@@ -29,24 +38,27 @@ RUN mkdir -p /stt-models && mkdir -p /tts-models
 WORKDIR /stt-models
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 -o sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 && \
     tar -xf sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 && \
-    rm sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 && \
-    mv sherpa-onnx-paraformer-zh-2023-03-28/model.int8.onnx . && \
-    mv sherpa-onnx-paraformer-zh-2023-03-28/tokens.txt . && \
-    rm -rf sherpa-onnx-paraformer-zh-2023-03-28
+    rm sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 
 
 # Download and extract default TTS model (matcha-icefall-zh-baker)
 WORKDIR /tts-models
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/matcha-icefall-zh-baker.tar.bz2 -o matcha-icefall-zh-baker.tar.bz2 && \
     tar -xf matcha-icefall-zh-baker.tar.bz2 && \
-    rm matcha-icefall-zh-baker.tar.bz2 && \
-    mv matcha-icefall-zh-baker/* . && \
-    rm -rf matcha-icefall-zh-baker
-RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v2.onnx -o hifigan_v2.onnx
+    rm matcha-icefall-zh-baker.tar.bz2 
 
-HEALTHCHECK --start-period=3m --interval=20m \
+WORKDIR /tts-models
+RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-multi-lang-v1_0.tar.bz2 -o kokoro-multi-lang-v1_0.tar.bz2 && \
+    tar -xf kokoro-multi-lang-v1_0.tar.bz2 && \
+    rm matcha-icefall-zh-baker.tar.bz2 
+    
+RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v1.onnx -o hifigan_v1.onnx    
+RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v2.onnx -o hifigan_v2.onnx
+RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v2.onnx -o hifigan_v3.onnx
+
+HEALTHCHECK --start-period=3m --interval=5m \
     CMD echo '{ "type": "describe" }' \
         | nc -w 1 localhost 10400 \
-        | grep -iq "sherpa" \
+        | grep -iq "Sherpa" \
         || exit 1
 # Copy the add-on code.  Crucially *before* requirements.txt, so Docker layer caching works!
 COPY . /app

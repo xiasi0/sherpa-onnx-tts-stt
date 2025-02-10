@@ -1,5 +1,5 @@
 name: Sherpa Onnx TTS/STT
-version: "0.1.11"
+version: "0.2.1"
 slug: sherpa_onnx_tts_stt
 description: Wyoming integration for sherpa-onnx TTS and STT. (Supports Chinese For Now. It just works. For Multi-language/Custimaze Port/Custimaze Model Support, PR is Welcomed.)
 url: https://github.com/ptbsare/home-assistant-addons/tree/main/sherpa-onnx-tts-stt
@@ -15,9 +15,24 @@ init: false
 options:
     language: zh-CN
     speed: 1.0
+    stt_model: sherpa-onnx-paraformer-zh-2023-03-28
+    stt_use_int8_onnx_model: True
+    stt_thread_num: 3
+    tts_model: matcha-icefall-zh-baker
+    tts_thread_num: 3
+    tts_speaker_sid: 0
+    debug: True
 schema:
-    language: str?
-    speed: float?
+    language: str
+    speed: float
+    stt_model: str
+    stt_use_int8_onnx_model: bool
+    stt_thread_num: int
+    tts_model: |
+      list(matcha-icefall-zh-baker|kokoro-multi-lang-v1_0)
+    tts_thread_num: int
+    tts_speaker_sid: int
+    debug: bool
 ports:
   10400/tcp: 10400
 homeassistant: 2023.8.0.dev20230728
