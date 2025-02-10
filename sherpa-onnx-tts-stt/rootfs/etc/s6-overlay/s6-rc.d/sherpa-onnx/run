@@ -15,10 +15,10 @@ DEBUG=$(echo `bashio::config 'debug'`|sed "s/null/$DEBUG/g")
 exec python3 /app/run.py \
     --language "$LANGUAGE" \
     --speed "$SPEED" \
-    --stt_model: "$STT_MODEL" \
-    --stt_use_int8_onnx_model: "$STT_USE_INT8_ONNX_MODEL" \
-    --stt_thread_num: "$STT_THREAD_NUM" \
-    --tts_model: "$TTS_MODEL" \
-    --tts_thread_num: "$TTS_THREAD_NUM" \
-    --tts_speaker_sid: "$TTS_SPEAKER_SID" \
-    --debug: "$DEBUG" 
+    --stt_model "$STT_MODEL" \
+    --stt_use_int8_onnx_model "$STT_USE_INT8_ONNX_MODEL" \
+    --stt_thread_num "$STT_THREAD_NUM" \
+    --tts_model "$TTS_MODEL" \
+    --tts_thread_num "$TTS_THREAD_NUM" \
+    --tts_speaker_sid "$TTS_SPEAKER_SID" \
+    --debug "$DEBUG" 

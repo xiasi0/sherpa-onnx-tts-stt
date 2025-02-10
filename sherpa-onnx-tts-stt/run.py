@@ -342,8 +342,9 @@ async def main() -> None:
         try:
                 stt_model = sherpa_onnx.OfflineRecognizer.from_paraformer(
                 paraformer=os.path.join(stt_model_dir, cli_args.stt_model, "model.int8.onnx" if cli_args.stt_use_int8_onnx_model == True else "model.onnx"),
-                tokens=os.path.join(stt_model_dir, "tokens.txt"),
+                tokens=os.path.join(stt_model_dir, cli_args.stt_model, "tokens.txt"),
                 decoding_method='greedy_search',
+                provider='cpu',
                 num_threads=cli_args.stt_thread_num,   # Adjust based on your hardware
                 sample_rate=16000,
                 feature_dim=80,
@@ -366,8 +367,9 @@ async def main() -> None:
                 lexicon=os.path.join(tts_model_dir, cli_args.tts_model, "lexicon.txt"),
                 tokens=os.path.join(tts_model_dir, cli_args.tts_model, "tokens.txt"),
                 data_dir=os.path.join(tts_model_dir,""), # Add your espeak-ng-data path if necessary
-                dict_dir=os.path.join(tts_model_dir, cli_args.tts_model, "dict")
+                dict_dir=os.path.join(tts_model_dir, cli_args.tts_model, "dict"),
                 ),
+                sid=cli_args.tts_speaker_sid,
                 provider="cpu",    # or "cuda" if you have a GPU
                 num_threads=cli_args.tts_thread_num,     # Adjust as needed
                 debug=cli_args.debug,       # Set to True for debugging output
@@ -377,32 +379,31 @@ async def main() -> None:
                 max_num_sentences=1,
                 )
                 )
-
         except Exception as e:
             _LOGGER.exception("Failed to initialize TTS model:")
             raise
 
-    if 'kokora' in cli_args.tts_model:
+    if 'kokoro-multi-lang-v1' in cli_args.tts_model:
         try:
                 tts_model = sherpa_onnx.OfflineTts(
                 sherpa_onnx.OfflineTtsConfig(
                 model=sherpa_onnx.OfflineTtsModelConfig(
-                matcha=sherpa_onnx.OfflineTtsKokoroModelConfig(
+                kokoro=sherpa_onnx.OfflineTtsKokoroModelConfig(
                 model=os.path.join(tts_model_dir, cli_args.tts_model, "model.onnx"),
                 voices=os.path.join(tts_model_dir, cli_args.tts_model, "voices.bin"),
+                lexicon=f"{tts_model_dir}/{cli_args.tts_model}/lexicon-zh.txt,{tts_model_dir}/{cli_args.tts_model}/lexicon-us-en",
                 tokens=os.path.join(tts_model_dir, cli_args.tts_model, "tokens.txt"),
-                data_dir=os.path.join(tts_model_dir, cli_args.tts_model, "espeak-ng-data") # Add your espeak-ng-data path if necessary
+                data_dir=os.path.join(tts_model_dir, cli_args.tts_model, "espeak-ng-data"), # Add your espeak-ng-data path if necessary
+                dict_dir=os.path.join(tts_model_dir, cli_args.tts_model, "dict"),
                 ),
                 provider="cpu",    # or "cuda" if you have a GPU
                 num_threads=cli_args.tts_thread_num,     # Adjust as needed
                 debug=cli_args.debug,       # Set to True for debugging output
                 ),
-
-                rule_fsts=f"{tts_model_dir}/{cli_args.tts_model}/phone.fst,{tts_model_dir}/{cli_args.tts_model}/date.fst,{tts_model_dir}/{cli_args.tts_model}/number.fst",  # Example rule FSTs, adjust path if needed
+                rule_fsts=f"{tts_model_dir}/{cli_args.tts_model}/phone-zh.fst,{tts_model_dir}/{cli_args.tts_model}/date-zh.fst,{tts_model_dir}/{cli_args.tts_model}/number-zh.fst",  # Example rule FSTs, adjust path if needed
                 max_num_sentences=1,
                 )
                 )
-
         except Exception as e:
             _LOGGER.exception("Failed to initialize TTS model:")
             raise
