@@ -330,7 +330,7 @@ async def main() -> None:
     )
 
      # Set up logging
-    if cli_args.debug == True
+    if cli_args.debug == True:
         logging.basicConfig(level=logging.DEBUG)
 
     _LOGGER.info("Starting sherpa-onnx add-on...")
@@ -338,7 +338,7 @@ async def main() -> None:
     stt_model_dir="/stt-models"
     tts_model_dir="/tts-models"
     # STT Initialization (adjust paths as needed for extracted model)
-    if 'paraformer' in cli_args.stt_model
+    if 'paraformer' in cli_args.stt_model:
         try:
                 stt_model = sherpa_onnx.OfflineRecognizer.from_paraformer(
                 paraformer=os.path.join(stt_model_dir, cli_args.stt_model, "model.int8.onnx" if cli_args.stt_use_int8_onnx_model == True else "model.onnx"),
@@ -355,7 +355,7 @@ async def main() -> None:
             raise
 
     # TTS Initialization
-    if 'matcha' in cli_args.tts_model
+    if 'matcha' in cli_args.tts_model:
         try:
                 tts_model = sherpa_onnx.OfflineTts(
                 sherpa_onnx.OfflineTtsConfig(
@@ -382,7 +382,7 @@ async def main() -> None:
             _LOGGER.exception("Failed to initialize TTS model:")
             raise
 
-    if 'kokora' in cli_args.tts_model
+    if 'kokora' in cli_args.tts_model:
         try:
                 tts_model = sherpa_onnx.OfflineTts(
                 sherpa_onnx.OfflineTtsConfig(
