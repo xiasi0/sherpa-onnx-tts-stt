@@ -1,7 +1,9 @@
 name: Sherpa Onnx TTS/STT
 version: "0.2.6"
 slug: sherpa_onnx_tts_stt
-description: Wyoming integration for sherpa-onnx TTS and STT. (Supports Chinese For Now. It just works. For Multi-language/Custimaze Port/Custimaze Model Support, PR is Welcomed.)
+description: >-
+  "Sherpa-onnx TTS/STT with wyoming support, supports kokoro-TTS/matcha-TTS/paraformer-STT, requires 1.5GB RAM. 
+  离线Sherpa-onnx TTS/STT的wyoming集成，支持kokoro-TTS/matcha-TTS/paraformer-STT，需要1.5G内存。"
 url: https://github.com/ptbsare/home-assistant-addons/tree/main/sherpa-onnx-tts-stt
 arch:
   - amd64

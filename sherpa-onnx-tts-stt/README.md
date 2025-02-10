@@ -4,7 +4,11 @@
 
 Supports Kokoro-TTS!!
 
-Wyoming integration for sherpa-onnx TTS and STT. (It just works. For Multi-language/Custimaze Port/Custimaze Model Support, PR is Welcomed.)
+Offline Sherpa-onnx TTS/STT with wyoming support, supports kokoro-TTS/matcha-TTS/paraformer-STT, requires 1.5GB RAM. 
+  
+离线Sherpa-onnx TTS/STT的wyoming集成，支持kokoro-TTS/matcha-TTS/paraformer-STT，需要1.5G内存。
+
+(It just works. For Multi-language/Custimaze Port/Custimaze Model Support, PR is Welcomed.)
 
 ## Supported STT Models:
 * sherpa-onnx-paraformer-zh-2023-03-28 (Chinese Only, very fast on CPU / Tested on Intel(R) Celeron(R) CPU N3350 @ 1.10GHz)
