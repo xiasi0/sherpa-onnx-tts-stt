@@ -29,64 +29,38 @@ import sherpa_onnx
 _LOGGER = logging.getLogger("sherpa_onnx_addon")
 
 
-def _download_stt_model(model_url, model_path):
+def _download_model(model_url, model_dir, model):
         """Downloads and extracts the STT model."""
-        if not os.path.exists(model_path):
+        if not os.path.exists(os.path.join(model_dir, model)):
             _LOGGER.info(f"Downloading STT model: {model_url}")
-            os.makedirs(model_path, exist_ok=True)
+            os.makedirs(os.path.join(model_dir, model), exist_ok=True)
 
             # Use curl (or wget) for download and extraction (more robust than Python libraries for large files)
             try:
              subprocess.check_call(
-                   ["curl", "-L", model_url, "-o", "stt_model.tar.bz2"]
+                   ["curl", "-L", model_url, "-o", os.path.join(model_dir, model, f"{model}.tar.gz")]
                )
 
-             subprocess.check_call(["tar", "-xvf", "stt_model.tar.bz2","-C", model_path])
-             os.remove("stt_model.tar.bz2") # Clean up
+             subprocess.check_call(["tar", "-xvf", os.path.join(model_dir, model, f"{model}.tar.gz"),"-C", model_dir])
+             os.remove(os.path.join(model_dir, model, f"{model}.tar.gz")) # Clean up
 
             except subprocess.CalledProcessError as e:
-                 _LOGGER.error(f"Error downloading or extracting STT model: {e}")
+                 _LOGGER.error(f"Error downloading or extracting  model: {e}")
                  raise  #  Re-raise to stop add-on startup on failure
         else:
          _LOGGER.info("STT model already exists.")
-def _download_tts_model(model_url,model_dir):
-        """Downloads and extracts the STT model."""
-        if not os.path.exists(model_dir):
-            _LOGGER.info(f"Downloading TTS model: {model_url}")
-            os.makedirs(model_dir, exist_ok=True)
 
-            # Use curl (or wget) for download and extraction (more robust than Python libraries for large files)
-            try:
-             subprocess.check_call(
-                   ["curl", "-L", model_url, "-o", "tts_model.tar.bz2"]
-               )
-
-             subprocess.check_call(["tar", "-xvf", "tts_model.tar.bz2","-C", model_dir])
-             os.remove("tts_model.tar.bz2") # Clean up
-
-            except subprocess.CalledProcessError as e:
-                 _LOGGER.error(f"Error downloading or extracting TTS model: {e}")
-                 raise  #  Re-raise to stop add-on startup on failure
-        else:
-         _LOGGER.info("TTS model already exists.")
-
-
-
-def _initialize_models():
-        """Downloads (if necessary) and initializes the STT and TTS models."""
-
+def _initialize_stt_models(model):
         # --- STT Model ---
-        stt_model_url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2"
-        stt_model_dir =  "/stt_model"
-        _download_stt_model(stt_model_url, stt_model_dir)
+        stt_model_url = f"https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/{model}.tar.bz2"
+        stt_model_dir =  "/stt-models"
+        _download_stt_model(stt_model_url, stt_model_dir, model)
 
-
+def _initialize_tts_models(model):
         # --- TTS Model ---
-        tts_model_url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/matcha-icefall-zh-baker.tar.bz2"
-        tts_vocoder = "https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v2.onnx"
-        tts_model_dir =  "/tts_model"
-        _download_tts_model(tts_model_url,tts_model_dir)
-        _download_tts_model(tts_vocoder,tts_model_dir)
+        tts_model_url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/{model}.tar.bz2"
+        tts_model_dir =  "/tts-models"
+        _download_tts_model(tts_model_url, tts_model_dir, model)
 
 class SherpaOnnxEventHandler(AsyncEventHandler):
     """Event handler for sherpa-onnx TTS and STT."""
