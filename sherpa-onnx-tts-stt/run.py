@@ -111,8 +111,9 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
 #        ]
 
         _LOGGER.info(f"CLI Args: {self.cli_args}")
-        self.language = self.cli_args.language or DEFAULT_LANGUAGE
-        self.speed = self.cli_args.speed or DEFAULT_SPEED
+        self.language = cli_args.language
+        self.speed = cli_args.speed
+        self.sid = cli_args.tts_speaker_sid
 
         self.tts_model = tts_model
 
@@ -140,10 +141,9 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
         if Synthesize.is_type(event.type):
             synthesize = Synthesize.from_event(event)
             audio = self.tts_model.generate(
-                 text=synthesize.text,
-                 sid=0, # Speaker ID, adjust if using a multi-speaker model
-                 speed=self.speed
-
+                text=synthesize.text,
+                sid=cli_args.tts_speaker_sid,
+                speed=cli_args.speed,
             )
             _LOGGER.info(f"Synthesizing: {synthesize.text}")
             if isinstance(audio.samples, list):
@@ -369,12 +369,10 @@ async def main() -> None:
                 data_dir=os.path.join(tts_model_dir,""), # Add your espeak-ng-data path if necessary
                 dict_dir=os.path.join(tts_model_dir, cli_args.tts_model, "dict"),
                 ),
-                sid=cli_args.tts_speaker_sid,
                 provider="cpu",    # or "cuda" if you have a GPU
                 num_threads=cli_args.tts_thread_num,     # Adjust as needed
                 debug=cli_args.debug,       # Set to True for debugging output
                 ),
-
                 rule_fsts=f"{tts_model_dir}/{cli_args.tts_model}/phone.fst,{tts_model_dir}/{cli_args.tts_model}/date.fst,{tts_model_dir}/{cli_args.tts_model}/number.fst",  # Example rule FSTs, adjust path if needed
                 max_num_sentences=1,
                 )
