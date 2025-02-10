@@ -1,0 +1,67 @@
+# Home Assistant Add-on: Sherpa Onnx TTS/STT
+
+## Installation
+
+Follow these steps to get the add-on installed on your system:
+
+1. Navigate in your Home Assistant frontend to **Settings** -> **Add-ons** -> **Add-on store**.
+2. Add the store https://github.com/ptbsare/home-assistant-addons
+2. Find the "Sherpa Onnx TTS/STT" add-on and click it.
+3. Click on the "INSTALL" button.
+
+## How to use
+
+After this add-on is installed and running, it will be automatically discovered
+by the Wyoming integration in Home Assistant. To finish the setup,
+click the following my button:
+
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=wyoming)
+
+Alternatively, you can install the Wyoming integration manually, see the
+[Wyoming integration documentation](https://www.home-assistant.io/integrations/wyoming/)
+for more information.
+
+## Models
+
+STT Models are automatically downloaded from [Github](https://github.com/k2-fsa/sherpa-onnx/releases/tag/asr-models) and put into `/stt-models`.
+
+TTS Models are automatically downloaded from [Github](https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models) and put into `/tts-models`.
+
+## Configuration
+
+### Option: `language`
+
+Default language to use. eg. en
+
+### Option: `speed`
+
+TTS Speech Speed. eg. 1.0
+
+### Option: `stt_model`
+
+Name of the model to use. eg. sherpa-onnx-paraformer-zh-2023-03-28
+See the [models](#models) section for more details.
+
+### Option: `stt_use_int8_onnx_model`
+
+Enable int8 model to reduce memery usage. eg. True
+
+### Option: `stt_thread_num`
+
+Number of Threads for TTS. eg. 3
+    
+### Option: `tts_model`
+
+Name of the model to use. eg. matcha-icefall-zh-baker
+
+### Option: `tts_thread_num`
+
+Number of Threads for TTS. eg. 3
+
+### Option: `tts_speaker_sid`
+
+TTS Speaker ID. eg. 0
+
+### Option: `debug`
+
+Enable debug logging. eg. False
