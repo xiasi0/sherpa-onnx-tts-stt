@@ -381,7 +381,7 @@ async def main() -> None:
                 _LOGGER.exception("Failed to initialize TTS model:")
                 raise
 
-        if 'kokoro-multi-lang-v1' == cli_args.tts_model:
+        if 'kokoro-multi-lang-v1_0' == cli_args.tts_model:
             try:
                 tts_model = sherpa_onnx.OfflineTts(
                 sherpa_onnx.OfflineTtsConfig(
