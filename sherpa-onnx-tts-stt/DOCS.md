@@ -74,7 +74,7 @@ See the [models](#models) section for more details.
 ### Option: `custom_stt_model_eval`
 For advanced users only.
 python eval expression for building the model at runtime, this string is passed to the python `eval()` function. eg.
-Similar `custom_tts_model_eval` below.
+Similar to `custom_tts_model_eval` below.
 Goto the [Sherpa Onnx repo STT Python examples](https://github.com/k2-fsa/sherpa-onnx/blob/master/python-api-examples/offline-decode-files.py) for more information.
 
 ### Option: `custom_tts_model`
