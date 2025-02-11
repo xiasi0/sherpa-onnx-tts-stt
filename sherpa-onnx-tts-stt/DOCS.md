@@ -65,3 +65,45 @@ TTS Speaker ID. eg. 0
 ### Option: `debug`
 
 Enable debug logging. eg. False
+
+### Option: `custom_stt_model`
+For advanced users only.
+Name of the model to use. eg. sherpa-onnx-zipformer-cantonese-2024-03-13
+See the [models](#models) section for more details.
+
+### Option: `custom_stt_model_eval`
+For advanced users only.
+python eval expression for building the model at runtime, this string is passed to the python `eval()` function. eg.
+Similar `custom_tts_model_eval` below.
+Goto the [Sherpa Onnx repo STT Python examples](https://github.com/k2-fsa/sherpa-onnx/blob/master/python-api-examples/offline-decode-files.py) for more information.
+
+### Option: `custom_tts_model`
+For advanced users only.
+Name of the model to use. eg. vits-cantonese-hf-xiaomaiiwn
+See the [models](#models) section for more details.
+
+### Option: `custom_tts_model_eval`
+For advanced users only.
+python eval expression for building the model at runtime, this string is passed to the python `eval()` function. eg. 
+```python
+sherpa_onnx.OfflineTts(
+sherpa_onnx.OfflineTtsConfig(
+model=sherpa_onnx.OfflineTtsModelConfig(
+kokoro=sherpa_onnx.OfflineTtsKokoroModelConfig(
+model="/tts-models/kokoro-multi-lang-v1_0/model.onnx",
+voices="/tts-models/kokoro-multi-lang-v1_0/voices.bin",
+lexicon="/tts-models/kokoro-multi-lang-v1_0/lexicon-zh.txt,/tts-models//lexicon-us-en.txt",
+tokens="/tts-models/kokoro-multi-lang-v1_0/tokens.txt",
+data_dir="/tts-models/kokoro-multi-lang-v1_0/espeak-ng-data",
+dict_dir="/tts-models/kokoro-multi-lang-v1_0/dict",
+),
+provider="cpu",
+num_threads=cli_args.tts_thread_num,
+debug=cli_args.debug,
+),
+rule_fsts="/tts-models/kokoro-multi-lang-v1_0/phone-zh.fst,/tts-models/kokoro-multi-lang-v1_0/date-zh.fst,/tts-models/kokoro-multi-lang-v1_0/number-zh.fst",                 
+max_num_sentences=1,
+)
+)
+Goto the [Sherpa Onnx repo TTS Python examples](https://github.com/k2-fsa/sherpa-onnx/blob/master/python-api-examples/offline-tts.py) for more information.
+

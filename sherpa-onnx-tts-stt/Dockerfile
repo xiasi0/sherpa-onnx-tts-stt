@@ -9,7 +9,10 @@ ENV TTS_MODEL 'matcha-icefall-zh-baker'
 ENV TTS_THREAD_NUM '3'
 ENV TTS_SPEAKER_SID '0'
 ENV DEBUG 'True'
-
+ENV CUSTOM_STT_MODEL 'null'
+ENV CUSTOM_STT_MODEL_EVAL 'null'
+ENV CUSTOM_TTS_MODEL 'null'
+ENV CUSTOM_TTS_MODEL_EVAL 'null'
 # Install Python dependencies
 #RUN apk add --no-cache python3 py3-pip cython3 git curl  \
 #  && python3 -m pip install --upgrade pip setuptools wheel
