@@ -32,7 +32,7 @@ RUN apt-get update \
 #RUN apk update && apk add --no-cache ffmpeg tar curl bzip2 git cython3
 
 WORKDIR /
-COPY rootfs /
+COPY rootfs/etc /etc
 
 # Create model directories
 RUN mkdir -p /stt-models && mkdir -p /tts-models
@@ -58,6 +58,12 @@ RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/k
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v1.onnx -o hifigan_v1.onnx    
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v2.onnx -o hifigan_v2.onnx
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v2.onnx -o hifigan_v3.onnx
+
+# Download and extract espeak-ng-data
+WORKDIR /tts-models/espeak-ng-data
+RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/espeak-ng-data.tar.bz2 -o espeak-ng-data.tar.bz2 && \
+    tar -xf espeak-ng-data.tar.bz2 && \
+    rm espeak-ng-data.tar.bz2   
 
 HEALTHCHECK --start-period=3m --interval=5m \
     CMD echo '{ "type": "describe" }' \

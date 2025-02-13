@@ -1,5 +1,5 @@
 name: Sherpa Onnx TTS/STT
-version: "0.2.8"
+version: "0.2.9"
 slug: sherpa_onnx_tts_stt
 description: >-
   Sherpa-onnx TTS/STT with wyoming support, supports kokoro-TTS/matcha-TTS/paraformer-STT, requires 1.5GB RAM. 
@@ -27,11 +27,12 @@ options:
 schema:
     language: str
     speed: float
-    stt_model: str
+    stt_model: |
+      list(sherpa-onnx-paraformer-zh-2023-03-28|custom_stt_model)
     stt_use_int8_onnx_model: bool
     stt_thread_num: int
     tts_model: |
-      list(matcha-icefall-zh-baker|kokoro-multi-lang-v1_0)
+      list(matcha-icefall-zh-baker|kokoro-multi-lang-v1_0|custom_tts_model)
     tts_thread_num: int
     tts_speaker_sid: int
     debug: bool
