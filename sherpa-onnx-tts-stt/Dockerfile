@@ -37,24 +37,32 @@ COPY rootfs/etc /etc
 # Create model directories
 RUN mkdir -p /stt-models && mkdir -p /tts-models
 
-# Download and extract default STT model (sherpa-onnx-paraformer-zh-2023-03-28)
+# Download and extract builtin STT model
 WORKDIR /stt-models
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 -o sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 && \
     tar -xf sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 && \
     rm sherpa-onnx-paraformer-zh-2023-03-28.tar.bz2 
 
-# Download and extract default TTS model (matcha-icefall-zh-baker)
+RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-paraformer-zh-small-2024-03-09.tar.bz2 -o sherpa-onnx-paraformer-zh-small-2024-03-09.tar.bz2 && \
+    tar -xf sherpa-onnx-paraformer-zh-small-2024-03-09.tar.bz2 && \
+    rm sherpa-onnx-paraformer-zh-small-2024-03-09.tar.bz2 
+
+# Download and extract builtin TTS model
 WORKDIR /tts-models
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/matcha-icefall-zh-baker.tar.bz2 -o matcha-icefall-zh-baker.tar.bz2 && \
     tar -xf matcha-icefall-zh-baker.tar.bz2 && \
     rm matcha-icefall-zh-baker.tar.bz2 
 
-# Download and extract default TTS model (kokoro-multi-lang-v1_0)
 WORKDIR /tts-models
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-multi-lang-v1_0.tar.bz2 -o kokoro-multi-lang-v1_0.tar.bz2 && \
     tar -xf kokoro-multi-lang-v1_0.tar.bz2 && \
     rm kokoro-multi-lang-v1_0.tar.bz2 
-    
+
+WORKDIR /tts-models
+RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-melo-tts-zh_en.tar.bz2 -o vits-melo-tts-zh_en.tar.bz2 && \
+    tar -xf vits-melo-tts-zh_en.tar.bz2 && \
+    rm vits-melo-tts-zh_en.tar.bz2 
+
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v1.onnx -o hifigan_v1.onnx    
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v2.onnx -o hifigan_v2.onnx
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v2.onnx -o hifigan_v3.onnx

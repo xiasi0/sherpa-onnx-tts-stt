@@ -18,5 +18,9 @@
 
 - Add GPU Support. (See Dockerfile.gpu)
 - fix custom_models for addon
+- Builtin stt model sherpa-onnx-paraformer-zh-small-2024-03-09
+- Builtin tts model vits-melo-tts-zh_en
 - 实验性添加GPU支持。（见Dockerfile.gpu）
 - 修复addon的custom_models参数
+- 内置stt模型sherpa-onnx-paraformer-zh-small-2024-03-09
+- 内置tts模型vits-melo-tts-zh_en

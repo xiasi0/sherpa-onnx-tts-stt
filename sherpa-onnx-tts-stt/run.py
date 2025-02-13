@@ -241,11 +241,11 @@ async def main() -> None:
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=10400)
 
+    # Provider arguments
+    parser.add_argument("--provider", type=str, default='cpu')
 
-     # Parse arguments
+    # Parse arguments
     cli_args = parser.parse_args()
-
-
 
     # Create the Wyoming info object.  This describes what
     #  the add-on supports.
@@ -309,6 +309,15 @@ async def main() -> None:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
+    
+    # Determine Provider
+    try:
+        subprocess.check_output('nvidia-smi')
+        _LOGGER.info('Nvidia GPU detected!')
+        cli_args.provider='cuda'
+    except Exception: # this command not being found can raise quite a few different errors depending on the configuration
+        _LOGGER.info('No Nvidia GPU in system! CPU is used by default')
+        cli_args.provider='cpu'
 
     _LOGGER.info("Starting sherpa-onnx add-on...")
 
@@ -336,7 +345,7 @@ async def main() -> None:
                 paraformer=os.path.join(stt_model_dir, cli_args.stt_model, "model.int8.onnx" if cli_args.stt_use_int8_onnx_model == True else "model.onnx"),
                 tokens=os.path.join(stt_model_dir, cli_args.stt_model, "tokens.txt"),
                 decoding_method='greedy_search',
-                provider='cpu',
+                provider=cli_args.provider,
                 num_threads=cli_args.stt_thread_num,   # Adjust based on your hardware
                 sample_rate=16000,
                 feature_dim=80,
@@ -347,6 +356,22 @@ async def main() -> None:
                 _LOGGER.error(e)
                 raise
 
+        if 'sherpa-onnx-paraformer-zh-small-2024-03-09' == cli_args.stt_model:
+            try:
+                stt_model = sherpa_onnx.OfflineRecognizer.from_paraformer(
+                paraformer=os.path.join(stt_model_dir, cli_args.stt_model, "model.int8.onnx"),
+                tokens=os.path.join(stt_model_dir, cli_args.stt_model, "tokens.txt"),
+                decoding_method='greedy_search',
+                provider=cli_args.provider,
+                num_threads=cli_args.stt_thread_num,   # Adjust based on your hardware
+                sample_rate=16000,
+                feature_dim=80,
+                debug=cli_args.debug,
+            )
+            except Exception as e:  # More specific exception handling is better
+                _LOGGER.exception("Failed to initialize STT model:")
+                _LOGGER.error(e)
+                raise
 
     # TTS Initialization
     if cli_args.custom_tts_model_eval != 'null':
@@ -369,11 +394,35 @@ async def main() -> None:
                 data_dir=os.path.join(tts_model_dir, "espeak-ng-data"),
                 dict_dir=os.path.join(tts_model_dir, cli_args.tts_model, "dict"),
                 ),
-                provider='cpu',    # or "cuda" if you have a GPU
+                provider=cli_args.provider,    # or "cuda" if you have a GPU
                 num_threads=cli_args.tts_thread_num,     # Adjust as needed
                 debug=cli_args.debug,       # Set to True for debugging output
                 ),
                 rule_fsts=f"{tts_model_dir}/{cli_args.tts_model}/phone.fst,{tts_model_dir}/{cli_args.tts_model}/date.fst,{tts_model_dir}/{cli_args.tts_model}/number.fst",  # Example rule FSTs, adjust path if needed
+                max_num_sentences=1,
+                )
+                )
+            except Exception as e:
+                _LOGGER.exception("Failed to initialize TTS model:")
+                raise
+
+        if 'vits-melo-tts-zh_en' == cli_args.tts_model:
+            try:
+                tts_model = sherpa_onnx.OfflineTts(
+                sherpa_onnx.OfflineTtsConfig(
+                model=sherpa_onnx.OfflineTtsModelConfig(
+                vits=sherpa_onnx.OfflineTtsVitsModelConfig(
+                model=os.path.join(tts_model_dir, cli_args.tts_model, "model.onnx"),
+                lexicon=os.path.join(tts_model_dir, cli_args.tts_model, "lexicon.txt"),
+                tokens=os.path.join(tts_model_dir, cli_args.tts_model, "tokens.txt"),
+
+                dict_dir=os.path.join(tts_model_dir, cli_args.tts_model, "dict"),
+                ),
+                provider=cli_args.provider,
+                num_threads=cli_args.tts_thread_num,
+                debug=cli_args.debug,
+                ),
+                rule_fsts=f"{tts_model_dir}/{cli_args.tts_model}/phone.fst,{tts_model_dir}/{cli_args.tts_model}/date.fst,{tts_model_dir}/{cli_args.tts_model}/number.fst,{tts_model_dir}/{cli_args.tts_model}/new_heteronym.fst",
                 max_num_sentences=1,
                 )
                 )
@@ -394,7 +443,7 @@ async def main() -> None:
                 data_dir=os.path.join(tts_model_dir, cli_args.tts_model, "espeak-ng-data"),
                 dict_dir=os.path.join(tts_model_dir, cli_args.tts_model, "dict"),
                 ),
-                provider='cpu',
+                provider=cli_args.provider,
                 num_threads=cli_args.tts_thread_num,
                 debug=cli_args.debug,
                 ),
