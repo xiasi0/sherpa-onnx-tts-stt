@@ -82,7 +82,7 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
 #            self.cli_args.pipeline
 #        ]
 
-        _LOGGER.info(f"CLI Args: {self.cli_args}")
+        _LOGGER.debug(f"CLI Args: {self.cli_args}")
 
         self.tts_model = tts_model
 
