@@ -8,14 +8,16 @@ Offline Sherpa-onnx TTS/STT with wyoming support, supports kokoro-TTS/matcha-TTS
   
 离线Sherpa-onnx TTS/STT的wyoming集成，支持kokoro-TTS/matcha-TTS/paraformer-STT，需要1.5G内存。
 
-(It just works. For Multi-language/Customize Port/Customize Model/Cuda Support, PR is Welcomed.)
+(It just works. PR is welcomed to improve this.)
 
 ## Supported STT Models:
 * sherpa-onnx-paraformer-zh-2023-03-28 (Chinese Only, very fast on Intel(R) Celeron(R) CPU N3350 @ 1.10GHz)
+* sherpa-onnx-paraformer-zh-small-2024-03-09 (Chinese Only, very fast on Intel(R) Celeron(R) CPU N3350 @ 1.10GHz)
 
 ## Supported TTS Models:
 * matcha-icefall-zh-baker (Chinese Only, fast on Intel(R) Celeron(R) CPU N3350 @ 1.10GHz)
-* kokoro-multi-lang-v1_0 (Multiple-Languages, medium)
+* vits-melo-tts-zh_en (Chinese and English, medium on Intel(R) Celeron(R) CPU N3350 @ 1.10GHz)
+* kokoro-multi-lang-v1_0 (Multiple-Languages, a little bit slow on Intel(R) Celeron(R) CPU N3350 @ 1.10GHz)
 ```
 For kokoro-multi-lang-v1_0
 There are 53 speakers in the model, with speaker ID 0 -- 52.
@@ -35,6 +37,9 @@ isabella, 23->bf_lily, 24->bm_daniel, 25->bm_fable, 26->bm_george, 27->bm_lewis,
 48->zf_xiaoyi, 49->zm_yunjian, 50->zm_yunxi, 51->zm_yunxia, 52->zm_yunyang,
 
 ```
+
+## Custom Models are supportted.
+See DOCS.md for details.
 
 [aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
 [amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg

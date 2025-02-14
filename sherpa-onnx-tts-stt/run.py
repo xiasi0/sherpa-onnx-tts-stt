@@ -116,7 +116,7 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
                 sid=self.cli_args.tts_speaker_sid,
                 speed=self.cli_args.speed,
             )
-            _LOGGER.info(f"Synthesizing: {synthesize.text}")
+            _LOGGER.debug(f"Synthesizing: {synthesize.text}")
             if isinstance(audio.samples, list):
                 audio_samples = np.array(audio.samples, dtype=np.float32)
             elif isinstance(audio.samples, np.ndarray):
@@ -206,7 +206,7 @@ class SherpaOnnxEventHandler(AsyncEventHandler):
 
                 if result and result.text:
                     await self.write_event(Transcript(text=result.text).event())
-                    _LOGGER.info(f"Final transcript on stop: {result.text}")
+                    _LOGGER.debug(f"Final transcript on stop: {result.text}")
 
                 return True
         return False # Unhandled events
