@@ -1,5 +1,4 @@
-ARG BUILD_FROM "nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04"
-FROM $BUILD_FROM
+FROM "nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04"
 USER root
 # First install bashio for homeassistant
 # Environment variables
@@ -175,12 +174,12 @@ WORKDIR /app
 
 # Install Python dependencies
 # Install sherpa-onnx.  Make sure ARM architecture is handled correctly.
-RUN pip install --break-system-packages --no-cache-dir numpy
+RUN pip install --no-cache-dir numpy
 RUN pip install sherpa-onnx==1.10.43+cuda -f https://k2-fsa.github.io/sherpa/onnx/cuda.html
 #RUN pip3 install --no-cache-dir sherpa-onnx
 #-f https://k2-fsa.github.io/sherpa/onnx/cpu.html
 #install 
-RUN pip install --break-system-packages --no-cache-dir git+https://github.com/rhasspy/wyoming.git
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+RUN pip install --no-cache-dir git+https://github.com/rhasspy/wyoming.git
+#RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
 # Copy the files
 COPY run.py /app/
