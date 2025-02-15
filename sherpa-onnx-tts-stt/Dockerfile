@@ -73,7 +73,7 @@ RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/e
     tar -xf espeak-ng-data.tar.bz2 && \
     rm espeak-ng-data.tar.bz2   
 
-HEALTHCHECK --start-period=3m --interval=5m \
+HEALTHCHECK --start-period=3m --interval=30m \
     CMD echo '{ "type": "describe" }' \
         | nc -w 1 localhost 10400 \
         | grep -iq "Sherpa" \
