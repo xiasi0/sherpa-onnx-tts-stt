@@ -1,7 +1,5 @@
-FROM "nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04"
+FROM "nvidia/cuda:12.8.0-cudnn-devel-ubuntu22.04"
 USER root
-# First install bashio for homeassistant
-# Environment variables
 ENV \
     CARGO_NET_GIT_FETCH_WITH_CLI=true \
     DEBIAN_FRONTEND="noninteractive" \
@@ -115,7 +113,7 @@ RUN mkdir -p /stt-models && mkdir -p /tts-models && mkdir -p /tts-models/espeak-
 WORKDIR /hifigan-models
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v1.onnx -o hifigan_v1.onnx    
 RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v2.onnx -o hifigan_v2.onnx
-RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v2.onnx -o hifigan_v3.onnx
+RUN curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/hifigan_v3.onnx -o hifigan_v3.onnx
 
 # Download and extract espeak-ng-data
 WORKDIR /tts-models/espeak-ng-data
@@ -128,18 +126,12 @@ HEALTHCHECK --start-period=3m --interval=5m \
         | nc -w 1 localhost 10400 \
         | grep -iq "Sherpa" \
         || exit 1
-# Copy the add-on code.  Crucially *before* requirements.txt, so Docker layer caching works!
 COPY . /app
 WORKDIR /app
 
 # Install Python dependencies
-# Install sherpa-onnx.  Make sure ARM architecture is handled correctly.
+# Install sherpa-onnx
 RUN pip install --no-cache-dir numpy
-RUN pip install sherpa-onnx==1.10.43+cuda -f https://k2-fsa.github.io/sherpa/onnx/cuda.html
-#RUN pip3 install --no-cache-dir sherpa-onnx
-#-f https://k2-fsa.github.io/sherpa/onnx/cpu.html
-#install 
+RUN pip install sherpa-onnx==1.10.43+cuda -f https://k2-fsa.github.io/sherpa/onnx/cuda.html 
 RUN pip install --no-cache-dir git+https://github.com/rhasspy/wyoming.git
-#RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
-# Copy the files
 COPY run.py /app/
